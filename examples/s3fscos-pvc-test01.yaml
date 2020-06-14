@@ -1,0 +1,18 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: s3fscos-pvc-test01
+  annotations:
+    ibm.io/auto-create-bucket: "true"
+    ibm.io/auto-delete-bucket: "false"
+    ibm.io/bucket: "mybucket-test01"
+    ibm.io/region: "us-standard"
+    ibm.io/secret-name: "cos-cred-rw"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: ibmc-s3fs-standard-perf-regional
+  volumeMode: Filesystem

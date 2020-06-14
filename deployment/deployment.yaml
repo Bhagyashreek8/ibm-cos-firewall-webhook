@@ -1,0 +1,100 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webhook-server
+  namespace: webhook-admin
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: webhook-server
+rules:
+- apiGroups: [""]
+  resources: ["persistentvolumes"]
+  verbs: ["get", "list", "patch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: webhook-server
+subjects:
+- kind: ServiceAccount
+  name: webhook-server
+  namespace: webhook-admin
+roleRef:
+  kind: ClusterRole
+  name: webhook-server
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-server
+  namespace: webhook-admin
+  labels:
+    app: webhook-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook-server
+  template:
+    metadata:
+      labels:
+        app: webhook-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # runAsUser: 1234
+      serviceAccountName: webhook-server
+      containers:
+      - name: server
+        image: nkkashyap/admission-controller-webhook-demo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8443
+          name: webhook-api
+        volumeMounts:
+        - name: webhook-tls-certs
+          mountPath: /run/secrets/tls
+          readOnly: true
+      volumes:
+      - name: webhook-tls-certs
+        secret:
+          secretName: webhook-server-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-server
+  namespace: webhook-admin
+spec:
+  selector:
+    app: webhook-server
+  ports:
+    - port: 443
+      targetPort: webhook-api
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: demo-webhook
+webhooks:
+  - name: webhook-server.webhook-admin.svc
+    clientConfig:
+      service:
+        name: webhook-server
+        namespace: webhook-admin
+        # path: "/podmutate"
+        path: "/pvmutate"
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMyakNDQWNJQ0NRREpOY3dVaHRjNitqQU5CZ2txaGtpRzl3MEJBUXNGQURBdk1TMHdLd1lEVlFRRERDUkIKWkcxcGMzTnBiMjRnUTI5dWRISnZiR3hsY2lCWFpXSm9iMjlySUVSbGJXOGdRMEV3SGhjTk1qQXdOakUwTVRZdwpNREUyV2hjTk1qQXdOekUwTVRZd01ERTJXakF2TVMwd0t3WURWUVFERENSQlpHMXBjM05wYjI0Z1EyOXVkSEp2CmJHeGxjaUJYWldKb2IyOXJJRVJsYlc4Z1EwRXdnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUsKQW9JQkFRQ3Brcit5YVlMbHE0eTAxQm5IV2tNKytRNUVRbTN4TGNqRTY3eFRtbTNiM2NVRWVoQVl1MkpjMEZPaApIdkh6eEErZ0ZLNnZVZnk2WThzenQyMmVQQlJnclEyMEs3MzhjaldSSWFxSTNjcC8xMTd1RDhTL0pqT3N5alBZCmJrM3l6eEJlLzYyQjV6SGdyRGhoTkVLS01nbEpSSUpCTWtyY3o0TTNEelZRV0tXeUNYME1hWTRVTEE4QWo4TFQKZGhZejU5U0dOWGFLdGUvZVZVN2RhSmZsQnZjZWFBZ1Zra2hWcmpKU0EzNFJjaDQxaHJXWHpMdjRxN1ZFYUNaQgo0RjdEb0psTEpMazRZRGpuYllHSUJ1RllkdXJRY2ZRRG9yODNHSU9VRUxOUTgxdklPMGRrQXVRM3lzRHhMZkx3ClNCZDlrY0twdFEzbG5BakFSZ29qajVZYWdaNHJBZ01CQUFFd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBZ0cKZ2FXUktvNS9YNGV4NmpkLzl3M3FabSszbHpxMUZvQVk0ZXF0TVMzY2g1VVNkN3BRbDZvV0hSSjFxb3RwTk9TLwpTVzV6VkJoY1I2akZBelZEZmlXVHJnUHNEeEdzSFdqR2N5ckdYK2UvRzhsL2taaGFUa2ZsTi93eGRtdUgzK0hCCjdVRkpjRmVLd2NhUVJiV2lKbmRzZVdZTm9KNGtOV1VPaDZzbVhTTlJJc3ZicEdkVG9lR3RRQVhxZVh2WkhXNDAKeXJYTnc4cWI2TU5rUThMVVlXcTRUbUZ5U1JnUWw2SHd5clhsQ2dPcGlqVkNPSHNOUHNXdEQxVDZTZXprMkJoTQp6d0lDa3JydnBrRExhd1FQMjBMRHFLdThHRzFWT1R1U3VENjFNUTA1TG1TUFI3MjVpQ1JKcXNCdEJ3TDR1N1paCjlZcE1YdldIWUxLSkFWb0ZxVG89Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        # resources: ["pods"]
+        resources: ["persistentvolumes"]

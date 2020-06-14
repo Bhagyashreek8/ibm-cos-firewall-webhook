@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cos-cred-rw
+type: ibm/ibmc-s3fs
+data:
+  access-key: <base64 encoded HMAC access_key_id>
+  secret-key: <base64 encoded HMAC secret_access_key>
+  res-conf-apikey: <base64 encoded apikey with Manager Role>
+stringData:
+  allowed_ips: "10.177.213.184,10.73.237.220,10.74.22.72" # List of Worker Node IPs
