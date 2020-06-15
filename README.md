@@ -33,14 +33,14 @@
 
 1. The `webhook-server` pod in the `webhook-admin` namespace should be running:
 ```
-$ kubectl -n webhook-admin get pods
+$ oc -n webhook-admin get pods
 NAME                             READY     STATUS    RESTARTS   AGE
-webhook-server-6f976f7bf-hssc9   1/1       Running   0          35m
+webhook-server-767f99b798-j2f4   1/1       Running   0          35m
 ```
 
 2. A `MutatingWebhookConfiguration` named `demo-webhook` should exist:
 ```
-$ kubectl get mutatingwebhookconfigurations
+$ oc get mutatingwebhookconfigurations
 NAME           AGE
 demo-webhook   36m
 ```
