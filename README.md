@@ -6,9 +6,9 @@
 3. `kubectl` or `oc` CLI should be installed on your local system
 
 ## Build the Image from Sources (optional)
-1. Export the  DockerHub registry name,
+1. Export the  DockerHub your registry name,
    ```
-   $ export DOCKER_REG="dockguest"
+   $ export DOCKER_REG="<Your DockerHub Registry>"
    ```
 
 2. Build and push the image
@@ -18,6 +18,11 @@
 
 ## Deploying the Webhook Server
 1. Log into OpenShift Cluster using `oc` command or export the `KUBECONFIG`
+
+2. Export the  DockerHub registry name (you can export your registry if you build your own image) 
+   ```
+   $ export DOCKER_REG="nkkashyap"
+   ```
 
 2. Deploy the webhook
    ```
