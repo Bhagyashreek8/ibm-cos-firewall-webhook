@@ -1,4 +1,4 @@
-# Kubernetes Admission Controller Webhook Demo
+# Kubernetes Webhook to configure IBM COS Firewall 
 
 ## Prerequisites
 1. Local system should be Linux or Mac
